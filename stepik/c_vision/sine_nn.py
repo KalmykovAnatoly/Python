@@ -31,11 +31,11 @@ class SineNet(torch.nn.Module):
 
     def __init__(self, n_hidden_neurons):
         super(SineNet, self).__init__()
-        self.fc1 = torch.nn.Linear(in_features=1, out_features=20, bias=True)
+        self.fc1 = torch.nn.Linear(in_features=1, out_features=n_hidden_neurons, bias=True)
         self.act1 = torch.nn.Tanh()
-        self.fc2 = torch.nn.Linear(in_features=20, out_features=20, bias=True)
+        self.fc2 = torch.nn.Linear(in_features=n_hidden_neurons, out_features=n_hidden_neurons, bias=True)
         self.act2 = torch.nn.Tanh()
-        self.fc3 = torch.nn.Linear(in_features=20, out_features=1, bias=True)
+        self.fc3 = torch.nn.Linear(in_features=n_hidden_neurons, out_features=1, bias=True)
 
     def forward(self, x):
         x = self.fc1(x)
@@ -46,7 +46,7 @@ class SineNet(torch.nn.Module):
         return x
 
 
-sine_net = SineNet(50)
+sine_net = SineNet(4)
 
 
 def predict(net, x, y):
@@ -58,5 +58,25 @@ def predict(net, x, y):
     plt.ylabel('Y')
     plt.show()
 
+
+predict(sine_net, x_validation, y_validation)
+
+optimizer = torch.optim.Adam(sine_net.parameters(), lr=0.01)
+
+
+def loss(pred, target):
+    squares = (pred - target) ** 2
+    return squares.mean()
+
+
+for epoch_index in range(2000):
+    optimizer.zero_grad()
+
+    y_pred = sine_net.forward(x_train)
+    loss_val = loss(y_pred, y_train)
+
+    loss_val.backward()
+
+    optimizer.step()
 
 predict(sine_net, x_validation, y_validation)
