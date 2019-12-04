@@ -65,7 +65,52 @@ class LeNet(torch.nn.Module):
         x = self.fc1(x)
         x = self.act3(x)
         x = self.fc2(x)
-        x = self.fc4(x)
+        x = self.act4(x)
         x = self.fc3(x)
 
-        return x;
+        return x
+
+
+lenet = LeNet()
+
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+mnist_net = lenet.to(device)
+
+loss = torch.nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(mnist_net.parameters(), lr=0.001)
+
+batch_size = 100
+
+test_accuracy_history = []
+test_loss_history = []
+
+X_test = X_test.to(device)
+y_test = y_test.to(device)
+
+for epoch in range(10000):
+    order = np.random.permutation(len(X_train))
+    for start_index in range(0, len(X_train), batch_size):
+        optimizer.zero_grad()
+
+        batch_indexes = order[start_index:start_index + batch_size]
+
+        X_batch = X_train[batch_indexes].to(device)
+        y_batch = y_train[batch_indexes].to(device)
+
+        predictions = mnist_net.forward(X_batch)
+
+        loss_value = loss(predictions, y_batch)
+        loss_value.backward()
+
+        optimizer.step()
+
+    test_predictions = mnist_net.forward(X_test)
+    test_loss_history.append(loss(test_predictions, y_test))
+
+    accuracy = (test_predictions.argmax(dim=1) == y_test).float().mean()
+    test_accuracy_history.append(accuracy)
+
+    print(accuracy)
+
+plt.plot(test_accuracy_history)
+plt.plot(test_loss_history)
