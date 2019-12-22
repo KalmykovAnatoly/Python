@@ -31,33 +31,43 @@ class LeNet(torch.nn.Module):
     def __init__(self):
         super(LeNet, self).__init__()
 
-        self.conv1 = torch.nn.Conv2d(
-            in_channels=1, out_channels=6, kernel_size=5, padding=2
+        self.conv1_1 = torch.nn.Conv2d(
+            in_channels=1, out_channels=6, kernel_size=3, padding=1
         )
-        self.act1 = torch.nn.Tanh()
-        self.pool1 = torch.nn.AvgPool2d(kernel_size=2, stride=2)
+        self.conv1_2 = torch.nn.Conv2d(
+            in_channels=6, out_channels=6, kernel_size=3, padding=1
+        )
+        self.act1 = torch.nn.ReLU()
+        self.bn1 = torch.nn.BatchNorm2d(num_features=6)
+        self.pool1 = torch.nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.conv2 = torch.nn.Conv2d(
-            in_channels=6, out_channels=16, kernel_size=5, padding=0
+        self.conv2_1 = torch.nn.Conv2d(
+            in_channels=6, out_channels=16, kernel_size=3, padding=0
         )
-        self.act2 = torch.nn.Tanh()
-        self.pool2 = torch.nn.AvgPool2d(kernel_size=2, stride=2)
+        self.conv2_2 = torch.nn.Conv2d(
+            in_channels=16, out_channels=16, kernel_size=3, padding=0
+        )
+        self.act2 = torch.nn.ReLU()
+        self.bn2 = torch.nn.BatchNorm2d(num_features=16)
+        self.pool2 = torch.nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.fc1 = torch.nn.Linear(5 * 5 * 16, 120)
-        self.act3 = torch.nn.Tanh()
+        self.act3 = torch.nn.ReLU()
 
         self.fc2 = torch.nn.Linear(120, 84)
-        self.act4 = torch.nn.Tanh()
+        self.act4 = torch.nn.ReLU()
 
         self.fc3 = torch.nn.Linear(84, 10)
 
     def forward(self, x):
-        x = self.conv1(x)
+        x = self.conv1_2(self.conv1_1(x))
         x = self.act1(x)
+        x = self.bn1(x)
         x = self.pool1(x)
 
-        x = self.conv2(x)
+        x = self.conv2_2(self.conv2_1(x))
         x = self.act2(x)
+        x = self.bn2(x)
         x = self.pool2(x)
 
         x = x.view(x.size(0), x.size(1) * x.size(2) * x.size(3))
@@ -71,46 +81,48 @@ class LeNet(torch.nn.Module):
         return x
 
 
-lenet = LeNet()
+def train(net, X_train, y_train, X_test, y_test):
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    net = net.to(device)
+    loss = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-mnist_net = lenet.to(device)
+    batch_size = 100
 
-loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(mnist_net.parameters(), lr=0.001)
+    test_accuracy_history = []
+    test_loss_history = []
 
-batch_size = 100
+    X_test = X_test.to(device)
+    y_test = y_test.to(device)
 
-test_accuracy_history = []
-test_loss_history = []
+    for epoch in range(10000):
+        order = np.random.permutation(len(X_train))
+        for start_index in range(0, len(X_train), batch_size):
+            optimizer.zero_grad()
+            net.train()
 
-X_test = X_test.to(device)
-y_test = y_test.to(device)
+            batch_indexes = order[start_index:start_index + batch_size]
 
-for epoch in range(10000):
-    order = np.random.permutation(len(X_train))
-    for start_index in range(0, len(X_train), batch_size):
-        optimizer.zero_grad()
+            X_batch = X_train[batch_indexes].to(device)
+            y_batch = y_train[batch_indexes].to(device)
 
-        batch_indexes = order[start_index:start_index + batch_size]
+            predictions = net.forward(X_batch)
 
-        X_batch = X_train[batch_indexes].to(device)
-        y_batch = y_train[batch_indexes].to(device)
+            loss_value = loss(predictions, y_batch)
+            loss_value.backward()
 
-        predictions = mnist_net.forward(X_batch)
+            optimizer.step()
 
-        loss_value = loss(predictions, y_batch)
-        loss_value.backward()
+        net.eval()
+        test_predictions = net.forward(X_test)
+        test_loss_history.append(loss(test_predictions, y_test))
 
-        optimizer.step()
+        accuracy = (test_predictions.argmax(dim=1) == y_test).float().mean()
+        test_accuracy_history.append(accuracy)
 
-    test_predictions = mnist_net.forward(X_test)
-    test_loss_history.append(loss(test_predictions, y_test))
+        print(accuracy)
 
-    accuracy = (test_predictions.argmax(dim=1) == y_test).float().mean()
-    test_accuracy_history.append(accuracy)
+    return test_accuracy_history, test_loss_history
 
-    print(accuracy)
 
-plt.plot(test_accuracy_history)
-plt.plot(test_loss_history)
+train(LeNet(), X_train, y_train, X_test, y_test)
