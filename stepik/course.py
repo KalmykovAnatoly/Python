@@ -1,9 +1,4 @@
-from fractions import Fraction
 from sys import stdin
-
-import numpy as np
-
-from stepik.gaussian_elimination import matrix_solve
 
 stream = None
 try:
@@ -11,15 +6,60 @@ try:
 except:
     stream = stdin
 
-n, m = map(int, stream.readline().split(" "))
+n = int(stream.readline())
 
-if n >= m:
-    A = []
-    for i in range(n):
-        A.append([item for item in map(Fraction, stream.readline().strip().split(" "))])
 
-    A = np.array(A, Fraction)
+# def create(namespace, parent):
+#     print("CREATE", namespace, parent)
+#
+#
+#
+# def add(namespace, var):
+#     print("ADD", namespace, var)
+#     temp = namespaces.get(namespace, [])
+#     temp.append(var)
+#     namespaces[namespace] = temp
+#
+#
+# def get(namespace, var):
+#     print("GET", namespace, var)
+#
+#
+# commands = {"create": create, "add": add, "get": get}
+# namespaces = {"global": []}
+#
+# for i in range(n):
+#     raw = [item.strip() for item in stream.readline().split(" ")]
+#     command = commands.get(raw[0])
+#     command(raw[1], raw[2])
+#
+# print(namespaces)
 
-    matrix_solve(A)
-else:
-    print("INF")
+
+def recursive(ancestor, child):
+    ancestors = memory.get(child, [])
+    if ancestor == child:
+        return True
+    for item in ancestors:
+        if item == ancestor:
+            return True
+    for item in ancestors:
+        if recursive(ancestor, item):
+            return True
+
+
+memory = {}
+
+for i in range(n):
+    raw = [item.strip() for item in stream.readline().split(" ")]
+    child = raw[0]
+    memory[child] = []
+    for item in raw[1:]:
+        if item == ":":
+            continue
+        memory[child].append(item)
+
+n = int(stream.readline())
+for i in range(n):
+    ancestor, child = map(str.strip, stream.readline().split(" "))
+    print("Yes") if recursive(ancestor, child) else print("No")

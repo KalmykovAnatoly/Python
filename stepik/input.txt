@@ -1,18 +1,69 @@
-3 2
--10 -2 5
-4 6 5
--8 3 4
+2
+A : C B
+B : D E
+1
+E A
+Yes
 
-INF
 
-4 3
-1 1 -3 -1
-2 1 -2 1
-1 1 1 3
-1 2 -3 1
+10
+classA : classB classC classD classG classH
+classB : classC classE classG classH classK classL
+classC : classE classD classH classK classL
+classE : classD classF classK classL
+classD : classG classH
+classF : classK
+classG : classF
+classH : classL
+classK : classH classL
+classL
+38
+classK classD
+classD classA
+classG classD
+classH classA
+classE classE
+classH classG
+classE classL
+classB classD
+classD classL
+classD classG
+classD classE
+classA classF
+classA classC
+classK classA
+classA classH
+classK classD
+classH classB
+classK classB
+classD classL
+classG classG
+classA classH
+classK classL
+classG classE
+classB classA
+classC classK
+classK classL
+classC classL
+classG classC
+classD classD
+classC classG
+classE classA
+classF classK
+classB classG
+classH classL
+classL classF
+classH classG
+classD classA
+classH classL
 
-3 3
-1 3 2 7
-1 3 4 4
-9 1 3 2
-
+4
+A
+B : A
+C : A
+D : B C
+4
+A B
+B D
+C D
+D A
